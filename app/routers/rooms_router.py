@@ -7,7 +7,11 @@ from routers.auth_router import get_user_from_cookie
 
 router = APIRouter(tags=["rooms"])
 
-@router.post("/rooms", response_model=Room, status_code=status.HTTP_201_CREATED)
+@router.post("/rooms", response_model=Room, status_code=status.HTTP_201_CREATED,
+              summary="Создание комнаты (только администратор)", responses={
+                  status.HTTP_403_FORBIDDEN: {"description": "Недостаточно прав"},
+                  status.HTTP_409_CONFLICT: {"description": "Комната с таким названием существует"}
+              })
 def create_room(room: RoomCreate, curr_user: dict = Depends(get_user_from_cookie)):
     if curr_user["role"] != 'admin':
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Вам не хватает прав")
@@ -22,7 +26,9 @@ def create_room(room: RoomCreate, curr_user: dict = Depends(get_user_from_cookie
     create_room_in_db(room_id, room.name, room.capacity, room.equipment)
     return get_room_by_id(room_id)
 
-@router.get("/rooms", response_model=List[Room])
+@router.get("/rooms", response_model=List[Room], summary="Получить все комнаты", responses={
+    status.HTTP_400_BAD_REQUEST: {"description": "Минимальная вместимость больше максимальной"}
+})
 def get_rooms(min_cap: Optional[int] = Query(None, ge=0),
             max_cap: Optional[int] = Query(None, ge=0),
             equipment: Optional[str] = None):
@@ -39,7 +45,10 @@ def get_rooms(min_cap: Optional[int] = Query(None, ge=0),
     
     return rooms
 
-@router.get("/rooms/{room_id}", response_model=Room)
+@router.get("/rooms/{room_id}", response_model=Room, summary="Получить подробности комнаты по айди", 
+            responses={
+                status.HTTP_404_NOT_FOUND: {"description": "Комната не найдена"}
+            })
 def get_room(room_id: str):
     room = get_room_by_id(room_id)
     if room == '404':
@@ -47,7 +56,12 @@ def get_room(room_id: str):
                              detail="Комната не найдена")
     return room
 
-@router.put("/rooms/{room_id}", response_model=Room)
+@router.put("/rooms/{room_id}", response_model=Room, summary="Изменить данные комнаты (только администратор)",
+            responses={
+                status.HTTP_403_FORBIDDEN: {"description": "Недостаточно прав"},
+                status.HTTP_404_NOT_FOUND: {"description": "Комната не найдена"},
+                status.HTTP_409_CONFLICT: {"description": "Комната с таким названием существует"}
+            })
 def update_room(room_id: str, room: RoomCreate, curr_user: dict = Depends(get_user_from_cookie)):
     if curr_user["role"] != 'admin':
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Вам не хватает прав")
@@ -64,7 +78,10 @@ def update_room(room_id: str, room: RoomCreate, curr_user: dict = Depends(get_us
     update_room_in_db(room_id, room.name, room.capacity, room.equipment)
     return get_room_by_id(room_id)
 
-@router.delete("/rooms/{room_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/rooms/{room_id}", status_code=status.HTTP_204_NO_CONTENT,
+                summary="Удалить комнату (только администратор)", responses={
+                    status.HTTP_403_FORBIDDEN: {"description": "Недостаточно прав"}
+                })
 def delete_room(room_id: str, curr_user: dict = Depends(get_user_from_cookie)):
     if curr_user["role"] != 'admin':
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Вам не хватает прав")

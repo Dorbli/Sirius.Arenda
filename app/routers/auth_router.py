@@ -5,7 +5,10 @@ from typing import Annotated
 
 router = APIRouter(tags=['auth'])
 
-@router.post("/register", status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED, summary="Регистрация пользователя",
+             responses={
+                 status.HTTP_409_CONFLICT: {"description": "Человек с таким именем существует"}
+             })
 def register_user(user: User_url):
     info = create_user(user.username, user.password,
                  'admin' if user.role == 'admin' else 'base')
@@ -14,7 +17,10 @@ def register_user(user: User_url):
                              "Человек с таким именем существует.")
     return info
 
-@router.post("/login")
+@router.post("/login", summary="Авторизация пользователя", responses={
+    status.HTTP_401_UNAUTHORIZED: {"description": "Неверный пароль"}, 
+    status.HTTP_404_NOT_FOUND: {"description": "Не существует такого пользователя"}
+})
 def login_user(user_data: User, response: Response):
     user = authenticate_user(user_data.username, user_data.password)
     if user == '404':
