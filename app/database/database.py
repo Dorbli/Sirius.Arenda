@@ -1,11 +1,12 @@
 import sqlite3
 from contextlib import contextmanager as cm
+from pathlib import Path
 
-DB_NAME = "database.db"
+DB_PATH = Path(__file__).resolve().parent / 'databse.db'
 
 @cm
 def get_db():
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     try:
         yield conn
