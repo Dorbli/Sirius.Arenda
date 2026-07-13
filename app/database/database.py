@@ -1,7 +1,7 @@
 import sqlite3
 from contextlib import contextmanager as cm
 
-DB_NAME = "app/database/database.db"
+DB_NAME = "database.db"
 
 @cm
 def get_db():
