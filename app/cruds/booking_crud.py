@@ -42,8 +42,8 @@ def get_bookings_by_date(room_id: str, date: str):
     with get_db() as conn:
         try:
             dt.strptime(date, "%Y-%m-%d")
-            rows = conn.execute("SELECT * FROM bookings WHERE room_id = ? AND date(date_start) = ?",
-                             (room_id, date)).fetchall()
+            rows = conn.execute("SELECT * FROM bookings WHERE room_id = ? AND date(date_start) = ? AND status = ?",
+                             (room_id, date, BookingStatus.ACTIVE)).fetchall()
             if rows is None:
                 return '404'
             return rows
